@@ -1,0 +1,135 @@
+body {
+  background: #fff;
+  color: #202124;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.55;
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 2rem 1rem 4rem;
+}
+
+a {
+  color: #0b57d0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #dadce0;
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+blockquote {
+  border-left: 4px solid #dadce0;
+  color: #303134;
+  margin: 1rem 0;
+  padding: 0.25rem 0 0.25rem 1rem;
+}
+
+code,
+pre,
+.daily-content h3,
+.daily-content h4 {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.breadcrumb,
+.day-nav {
+  color: #5f6368;
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+}
+
+.day-nav {
+  border-bottom: 1px solid #dadce0;
+  border-top: 1px solid #dadce0;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 0.65rem 0;
+}
+
+.day-nav a:last-child {
+  text-align: right;
+}
+
+.calendar-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.month-card h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.4rem;
+}
+
+.calendar-month th,
+.calendar-month td {
+  border: 1px solid #dadce0;
+  padding: 0;
+  text-align: center;
+}
+
+.calendar-month th {
+  font-size: 0.75rem;
+  padding: 0.25rem;
+}
+
+.calendar-month a {
+  color: inherit;
+  display: block;
+  min-height: 1.9rem;
+  padding-top: 0.35rem;
+  text-decoration: none;
+}
+
+.out-of-scope {
+  background: #f8f9fa;
+}
+
+.hit-0 {
+  background: #fff;
+}
+
+.hit-low {
+  background: #d7e8ff;
+}
+
+.hit-medium {
+  background: #7eb6f6;
+}
+
+.hit-high {
+  background: #185abc;
+  color: #fff;
+}
+
+.chron-section {
+  border-left: 5px solid #dadce0;
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+}
+
+.chron-section.contemporaneous {
+  border-left-color: #1a73e8;
+}
+
+.chron-section.retrospective {
+  border-left-color: #f29900;
+}
+
+.chron-section.unknown-date {
+  border-left-color: #80868b;
+}
+
+.year-links {
+  font-size: 1.1rem;
+}
