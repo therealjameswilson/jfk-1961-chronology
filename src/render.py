@@ -18,6 +18,21 @@ DEFAULT_CORPUS_ROOT = Path("../jfk")
 DEFAULT_START_DATE = date(1961, 1, 20)
 DEFAULT_END_DATE = date(1961, 12, 31)
 DEFAULT_CONTEXT_CHARS = 300
+MONTH_NAMES = (
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
 
 
 @dataclass(frozen=True)
@@ -179,23 +194,32 @@ def group_hits_by_day(
 
 
 def render_day(current: date, hits: list[RenderHit], event: EventInfo | None) -> str:
-    label = f" - {event.label}" if event and event.label else ""
-    lines = [f"# {current.isoformat()}{label}", ""]
+    label = f" — {event.label}" if event and event.label else ""
+    lines = [f"# {_human_date(current)}{label}", ""]
     if event and event.note:
         lines.extend([f"> {event.note}", ""])
+    lines.extend(["---", ""])
 
     if not hits:
         lines.extend(
             [
                 "No references in 2025 release.",
                 "",
+                "---",
+                "",
                 "## Contemporaneous (1961)",
                 "",
                 "No contemporaneous hits.",
                 "",
+                "---",
+                "",
                 "## Retrospective",
                 "",
                 "No retrospective hits.",
+                "",
+                "---",
+                "",
+                _reference_summary(hits),
                 "",
             ]
         )
@@ -207,8 +231,10 @@ def render_day(current: date, hits: list[RenderHit], event: EventInfo | None) ->
             "Contemporaneous (1961)",
             categories["contemporaneous"],
             "No contemporaneous hits.",
+            heading_level=3,
         )
     )
+    lines.extend(["---", ""])
     lines.extend(
         _render_grouped_section(
             "Retrospective",
@@ -217,13 +243,16 @@ def render_day(current: date, hits: list[RenderHit], event: EventInfo | None) ->
         )
     )
     if categories["unknown"]:
+        lines.extend(["---", ""])
         lines.extend(
             _render_section(
                 "Document Date Unknown",
                 categories["unknown"],
                 "No unknown-date hits.",
+                heading_level=4,
             )
         )
+    lines.extend(["---", "", _reference_summary(hits), ""])
     return "\n".join(lines)
 
 
@@ -301,13 +330,19 @@ def iter_months(start_date: date, end_date: date) -> Iterable[str]:
         current += timedelta(days=days_in_month)
 
 
-def _render_section(title: str, hits: list[RenderHit], empty_text: str) -> list[str]:
+def _render_section(
+    title: str,
+    hits: list[RenderHit],
+    empty_text: str,
+    *,
+    heading_level: int,
+) -> list[str]:
     lines = [f"## {title}", ""]
     if not hits:
         lines.extend([empty_text, ""])
         return lines
     for hit in hits:
-        lines.extend(_render_hit(hit, heading_level=3))
+        lines.extend(_render_hit(hit, heading_level=heading_level))
     return lines
 
 
@@ -325,24 +360,19 @@ def _render_grouped_section(
     for hit in hits:
         grouped[hit.originating_agency or "unknown"].append(hit)
     for agency in sorted(grouped):
-        lines.extend([f"### {_escape_heading(agency)}", ""])
+        lines.extend([f"### {_escape_heading(_agency_display(agency))}", ""])
         for hit in sorted(grouped[agency], key=_hit_sort_key):
             lines.extend(_render_hit(hit, heading_level=4))
     return lines
 
 
 def _render_hit(hit: RenderHit, *, heading_level: int) -> list[str]:
-    label = hit.rif_number or hit.filename
     heading = "#" * heading_level
     return [
-        f"{heading} {_escape_heading(label)}",
-        "",
-        f"- Source filename: `{hit.filename}`",
-        f"- Source path: `{hit.source_path}`",
-        f"- Source markdown: {_source_markdown_link(hit.source_path)}",
-        f"- Document date: `{hit.doc_date}`",
-        f"- Originating agency: `{hit.originating_agency}`",
-        f"- Matched text: `{_inline_text(hit.matched_text)}`",
+        f"{heading} {_escape_heading(_source_label(hit))}",
+        f"**{_agency_display(hit.originating_agency)}** · "
+        f"{_document_date_display(hit.doc_date)} · "
+        f"Source: {_source_markdown_link(hit.source_path, hit.filename)}",
         "",
         "Excerpt (+/-300 characters around match):",
         "",
@@ -422,11 +452,6 @@ def _strip_yaml_scalar(raw: str) -> str:
     return value
 
 
-def _inline_text(raw: str) -> str:
-    cleaned = re.sub(r"\s+", " ", raw).strip()
-    return cleaned.replace("`", "'")
-
-
 def _escape_heading(raw: str) -> str:
     return raw.replace("\n", " ").strip() or "Unknown Source"
 
@@ -441,11 +466,52 @@ def _table_cell(raw: str) -> str:
     return raw.replace("|", "\\|")
 
 
-def _source_markdown_link(source_path: str) -> str:
+def _source_markdown_link(source_path: str, filename: str) -> str:
     if not source_path:
-        return "`unknown`"
+        return filename or "`unknown`"
     target = f"../../../jfk/{source_path}"
-    return f"[{source_path}](<{target}>)"
+    label = filename or source_path
+    return f"[{label}](<{target}>)"
+
+
+def _source_label(hit: RenderHit) -> str:
+    return hit.rif_number or Path(hit.filename).stem or hit.filename
+
+
+def _agency_display(raw: str) -> str:
+    value = raw.strip()
+    if not value or value.lower() == "unknown":
+        return "Agency unknown"
+    return value
+
+
+def _document_date_display(raw: str) -> str:
+    parsed = _parse_iso_date(raw)
+    if parsed:
+        return f"Document dated {_human_date(parsed)}"
+    return "Document date not identified"
+
+
+def _human_date(value: date) -> str:
+    return f"{MONTH_NAMES[value.month]} {value.day}, {value.year}"
+
+
+def _parse_iso_date(raw: str) -> date | None:
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
+def _reference_summary(hits: list[RenderHit]) -> str:
+    references = len(hits)
+    documents = len({hit.source_path for hit in hits})
+    reference_word = "reference" if references == 1 else "references"
+    document_word = "document" if documents == 1 else "documents"
+    return (
+        f"*{references} {reference_word} from {documents} {document_word} "
+        "in the 2025 NARA JFK release.*"
+    )
 
 
 def _load_pyarrow() -> tuple[Any, Any]:

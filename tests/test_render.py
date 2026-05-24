@@ -56,9 +56,12 @@ def test_render_day_keeps_unknown_date_hits_visible() -> None:
     assert "## Contemporaneous (1961)" in output
     assert "## Retrospective" in output
     assert "## Document Date Unknown" in output
-    assert "[jfk_files_md/104/104-00000-00000.md]" in output
+    assert "# January 21, 1961" in output
+    assert "[104-00000-00000.md]" in output
+    assert "**Agency unknown** · Document date not identified" in output
     assert "Excerpt (+/-300 characters around match):" in output
     assert "Before January 21, 1961 after." in output
+    assert "*1 reference from 1 document in the 2025 NARA JFK release.*" in output
 
 
 def test_render_day_zero_hit_stub_uses_required_text() -> None:
@@ -84,6 +87,7 @@ def test_render_day_groups_retrospective_hits_by_agency() -> None:
 
     assert "## Retrospective\n\n### SSCIA" in output
     assert "#### 157-00000-00000" in output
+    assert "**SSCIA** · Document dated September 1, 1975" in output
 
 
 def test_group_hits_by_day_prefers_stored_context_window() -> None:
