@@ -61,6 +61,9 @@ def _parse_month(s: str) -> int | None:
 # ---------------------------------------------------------------------------
 # Year normalization (handles OCR l/1 and G/6 swaps)
 # ---------------------------------------------------------------------------
+_YEAR_PAT = r"[\dlOG]{2,4}"
+
+
 def _normalize_year(raw: str) -> int | None:
     """Attempt to normalize a 2- or 4-char year string to a 4-digit int."""
     cleaned = raw.replace("l", "1").replace("O", "0").replace("G", "6")
@@ -96,13 +99,13 @@ def _safe_date(y: int, m: int, d: int) -> str | None:
 # ---------------------------------------------------------------------------
 # 1) Month DD, YYYY  /  Month DD YYYY  (American cable style)
 _RE_MDY = re.compile(
-    rf"\b({_MONTH_PAT})\.?\s+(\d{{1,2}}),?\s+(\d{{2,4}}|[lOG]\d{{2,3}})\b",
+    rf"\b({_MONTH_PAT})\.?\s+(\d{{1,2}}),?\s+({_YEAR_PAT})\b",
     re.IGNORECASE,
 )
 
 # 2) DD Month YYYY  (British / military style)
 _RE_DMY = re.compile(
-    rf"\b(\d{{1,2}})\s+({_MONTH_PAT})\.?\s+(\d{{2,4}}|[lOG]\d{{2,3}})\b",
+    rf"\b(\d{{1,2}})\s+({_MONTH_PAT})\.?\s+({_YEAR_PAT})\b",
     re.IGNORECASE,
 )
 
@@ -118,13 +121,13 @@ _RE_NUMERIC = re.compile(
 
 # 5) Range: Month DD-DD, YYYY  (with en-dash or hyphen)
 _RE_RANGE = re.compile(
-    rf"\b({_MONTH_PAT})\.?\s+(\d{{1,2}})\s*[\-\u2013]\s*(\d{{1,2}}),?\s+(\d{{2,4}}|[lOG]\d{{2,3}})\b",
+    rf"\b({_MONTH_PAT})\.?\s+(\d{{1,2}})\s*[\-\u2013]\s*(\d{{1,2}}),?\s+({_YEAR_PAT})\b",
     re.IGNORECASE,
 )
 
 # 6) Month-level: "early/mid/late March 1961", "in March 1961", "March of 1961"
 _RE_MONTH_LEVEL = re.compile(
-    rf"\b(?:(?:early|mid|late|in|the\s+month\s+of)[-\s]+)?({_MONTH_PAT})\.?\s+(?:of\s+)?(\d{{2,4}}|[lOG]\d{{2,3}})\b",
+    rf"\b(?:(?:early|mid|late|in|the\s+month\s+of)[-\s]+)?({_MONTH_PAT})\.?\s+(?:of\s+)?({_YEAR_PAT})\b",
     re.IGNORECASE,
 )
 
