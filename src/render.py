@@ -10,6 +10,11 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
+try:
+    from .redaction import scrub_security_numbers
+except ImportError:
+    from redaction import scrub_security_numbers
+
 
 DEFAULT_HITS_PATH = Path("data/hits.parquet")
 DEFAULT_EVENTS_PATH = Path("key_events.yaml")
@@ -430,7 +435,7 @@ def _source_context(
         return ""
     start = max(0, match_span[0] - context_chars)
     end = min(len(text), match_span[1] + context_chars)
-    return text[start:end].strip()
+    return scrub_security_numbers(text[start:end].strip())
 
 
 def _resolve_match_span(
@@ -459,7 +464,7 @@ def _resolve_match_span(
 
 
 def _stored_context(row: dict[str, Any]) -> str:
-    return str(row.get("context_window") or row.get("context") or "")
+    return scrub_security_numbers(str(row.get("context_window") or row.get("context") or ""))
 
 
 def _hit_sort_key(hit: RenderHit) -> tuple[int, str, str, int]:

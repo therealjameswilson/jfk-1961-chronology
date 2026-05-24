@@ -13,6 +13,11 @@ from typing import Any, Iterable
 
 import markdown
 
+try:
+    from .redaction import scrub_security_numbers
+except ImportError:
+    from redaction import scrub_security_numbers
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ROOT = REPO_ROOT / "docs"
@@ -339,7 +344,7 @@ def markdown_with_section_classes(raw: str) -> str:
 
 
 def markdown_to_html(raw: str) -> str:
-    return markdown.markdown(raw, extensions=MD_EXTENSIONS)
+    return markdown.markdown(scrub_security_numbers(raw), extensions=MD_EXTENSIONS)
 
 
 def chronology_section_class(title: str) -> str:

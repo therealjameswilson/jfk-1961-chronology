@@ -20,6 +20,7 @@ try:
         write_metadata_parquet,
         write_review_queue,
     )
+    from .redaction import scrub_security_numbers
 except ImportError:
     from date_patterns import DateHit, HitType, extract_dates
     from metadata import (
@@ -30,6 +31,7 @@ except ImportError:
         write_metadata_parquet,
         write_review_queue,
     )
+    from redaction import scrub_security_numbers
 
 
 DEFAULT_OUTPUT_PATH = Path("data/hits.parquet")
@@ -203,7 +205,7 @@ def _hit_row(
 def _context_window(text: str, span: tuple[int, int], context_chars: int) -> str:
     start = max(0, span[0] - context_chars)
     end = min(len(text), span[1] + context_chars)
-    return text[start:end].strip()
+    return scrub_security_numbers(text[start:end].strip())
 
 
 def _hit_id(source_path: str, hit: DateHit, bucket: str | None) -> str:
