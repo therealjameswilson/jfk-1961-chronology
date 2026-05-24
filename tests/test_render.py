@@ -59,6 +59,8 @@ def test_render_day_keeps_unknown_date_hits_visible() -> None:
     assert "# January 21, 1961" in output
     assert "[104-00000-00000.md]" in output
     assert "**Agency unknown** · Document date not identified" in output
+    assert "NARA release: [2025 JFK Assassination Records Release]" in output
+    assert "https://www.archives.gov/research/jfk/release-2025" in output
     assert "Excerpt (+/-300 characters around match):" in output
     assert "Before January 21, 1961 after." in output
     assert "*1 reference from 1 document in the 2025 NARA JFK release.*" in output

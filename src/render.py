@@ -23,6 +23,7 @@ DEFAULT_CORPUS_ROOT = Path("../jfk")
 DEFAULT_START_DATE = date(1961, 1, 20)
 DEFAULT_END_DATE = date(1961, 12, 31)
 DEFAULT_CONTEXT_CHARS = 300
+NARA_RELEASE_URL = "https://www.archives.gov/research/jfk/release-2025"
 MONTH_NAMES = (
     "",
     "January",
@@ -378,7 +379,8 @@ def _render_hit(hit: RenderHit, *, heading_level: int) -> list[str]:
         f"{heading} {_escape_heading(_source_label(hit))}",
         f"**{_agency_display(hit.originating_agency)}** · "
         f"{_document_date_display(hit.doc_date)} · "
-        f"Source: {_source_markdown_link(hit.source_path, hit.filename)}",
+        f"Source: {_source_markdown_link(hit.source_path, hit.filename)} · "
+        f"NARA release: [2025 JFK Assassination Records Release](<{NARA_RELEASE_URL}>)",
         "",
         "Excerpt (+/-300 characters around match):",
         "",
