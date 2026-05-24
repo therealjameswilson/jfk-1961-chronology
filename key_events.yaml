@@ -1,0 +1,96 @@
+year: 1961
+start_date: 1961-01-20
+end_date: 1961-12-31
+
+# Default: days without an entry below have no label and should use a generic stub
+default:
+  label: ""
+  note: ""
+
+days:
+  1961-01-20:
+    label: "Inauguration Day"
+    note: "John F. Kennedy inaugurated; delivers inaugural address at the U.S. Capitol."
+
+  1961-01-25:
+    label: "First live TV press conference"
+    note: "Kennedy holds the first live televised presidential press conference from Washington, D.C."
+
+  1961-03-01:
+    label: "Peace Corps established"
+    note: "President Kennedy issues an executive order creating the Peace Corps as a pilot program within the State Department."
+
+  1961-04-15:
+    label: "Bay of Pigs air strikes begin"
+    note: "Pre-invasion air strikes by Cuban exile pilots against Cuban airfields in support of the Bay of Pigs plan."
+
+  1961-04-17:
+    label: "Bay of Pigs invasion"
+    note: "Brigade 2506, a CIA-backed Cuban exile force, lands at the Bay of Pigs in a failed attempt to overthrow Castro."
+
+  1961-04-18:
+    label: "Bay of Pigs, Day 2"
+    note: "Cuban forces counterattack; exile brigade suffers heavy losses as Cuban air power remains intact."
+
+  1961-04-19:
+    label: "Bay of Pigs, collapse"
+    note: "Kennedy authorizes limited U.S. air cover; invasion is crushed and most of Brigade 2506 is captured."
+
+  1961-05-05:
+    label: "First American in space"
+    note: "Alan Shepard's Freedom 7 suborbital flight makes him the first American in space."
+
+  1961-06-03:
+    label: "Vienna Summit, Day 1"
+    note: "Kennedy meets Nikita Khrushchev in Vienna; first day of confrontational talks on Berlin and nuclear issues."
+
+  1961-06-04:
+    label: "Vienna Summit, Day 2"
+    note: "Second day of Kennedy-Khrushchev Vienna talks; tensions over Berlin are sharpened."
+
+  1961-07-25:
+    label: "Berlin crisis TV address"
+    note: "Kennedy addresses the nation on Berlin, announces military buildup and commitment to West Berlin."
+
+  1961-08-13:
+    label: "Berlin Wall construction begins"
+    note: "East German authorities, backed by the USSR, begin sealing the sector border; Berlin Wall construction starts."
+
+  1961-11-30:
+    label: "Operation Mongoose approved"
+    note: "Kennedy authorizes Operation Mongoose, a covert program targeting Castro's regime in Cuba."
+
+months:
+  1961-02:
+    label: "Early Cuba and Laos deliberations"
+    note: "Administration debates Cuba and Southeast Asia; Bay of Pigs planning intensifies."
+  1961-03:
+    label: "Early New Frontier initiatives"
+    note: "Peace Corps launch and domestic/foreign policy initiatives in early months of the administration."
+  1961-04:
+    label: "Bay of Pigs crisis"
+    note: "Failed Cuban invasion and immediate political fallout within the Kennedy administration."
+  1961-05:
+    label: "Space race and Cold War"
+    note: "Shepard flight and early steps toward an expanded U.S. space program under Kennedy."
+  1961-06:
+    label: "Vienna Summit and Berlin tensions"
+    note: "Kennedy-Khrushchev meeting heightens Berlin crisis and Cold War anxieties."
+  1961-07:
+    label: "Escalation of the Berlin Crisis"
+    note: "Kennedy announces military buildup; Soviet and East German pressure increases."
+  1961-08:
+    label: "Berlin Wall and divided city"
+    note: "Berlin Wall goes up; sector border sealed, symbolizing hardened Cold War division."
+  1961-09:
+    label: "Post-Berlin Wall consolidation"
+    note: "Both blocs adjust to the new Berlin status quo; ongoing diplomatic and military maneuvering."
+  1961-10:
+    label: "Checkpoint standoff and Berlin tension"
+    note: "U.S. and Soviet tanks face off in Berlin as the crisis peaks at Checkpoint Charlie."
+  1961-11:
+    label: "Operation Mongoose planning"
+    note: "Kennedy approves Mongoose; covert planning against Castro intensifies."
+  1961-12:
+    label: "End-of-year Cold War posture"
+    note: "Administration consolidates Berlin and Cuba policies at year's end."
