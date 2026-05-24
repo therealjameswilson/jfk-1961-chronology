@@ -502,7 +502,7 @@ def _table_cell(raw: str) -> str:
 def _source_markdown_link(source_path: str, filename: str) -> str:
     if not source_path:
         return filename or "`unknown`"
-    target = f"../../../jfk/{source_path}"
+    target = f"https://github.com/doctly/jfk/blob/main/{source_path}"
     label = filename or source_path
     return f"[{label}](<{target}>)"
 

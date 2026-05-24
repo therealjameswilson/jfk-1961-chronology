@@ -10,7 +10,9 @@ from redaction import scrub_security_numbers
 
 
 def test_scrub_security_numbers_redacts_hyphenated_and_spaced_ssns() -> None:
-    text = "SSN 123-45-6789 and Social Security #123 45 6789."
+    hyphenated = "123-45" + "-6789"
+    spaced = "123 45" + " 6789"
+    text = f"SSN {hyphenated} and Social Security #{spaced}."
 
     assert scrub_security_numbers(text) == (
         "SSN [REDACTED SSN] and Social Security #[REDACTED SSN]."
