@@ -90,7 +90,39 @@ def test_render_day_groups_retrospective_hits_by_agency() -> None:
     assert "**SSCIA** · Document dated September 1, 1975" in output
 
 
-def test_group_hits_by_day_prefers_stored_context_window() -> None:
+def test_group_hits_by_day_recomputes_context_from_source(tmp_path: Path) -> None:
+    source = "x" * 350 + "April 17, 1961" + "y" * 350
+    source_root = tmp_path
+    source_path = source_root / "jfk_files_md" / "104" / "sample.md"
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    source_path.write_text(source, encoding="utf-8")
+    rows = [
+        {
+            "bucket_type": "day",
+            "referenced_date": "1961-04-17",
+            "source_path": "jfk_files_md/104/sample.md",
+            "filename": "sample.md",
+            "rif_number": None,
+            "doc_date": "1975-09-01",
+            "originating_agency": "SSCIA",
+            "matched_text": "April 17, 1961",
+            "span_start": 350,
+            "span_end": 364,
+            "context_window": "stale parquet context",
+        }
+    ]
+
+    grouped = group_hits_by_day(
+        rows,
+        corpus_root=source_root,
+        context_chars=300,
+        source_cache={},
+    )
+
+    assert grouped["1961-04-17"][0].context == f"{'x' * 300}April 17, 1961{'y' * 300}"
+
+
+def test_group_hits_by_day_falls_back_to_stored_context_window() -> None:
     rows = [
         {
             "bucket_type": "day",

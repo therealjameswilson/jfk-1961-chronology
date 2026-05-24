@@ -14,6 +14,15 @@ DEFAULT_CORPUS_ROOT = Path("../jfk")
 DEFAULT_OUTPUT_PATH = Path("data/metadata.parquet")
 DEFAULT_REVIEW_QUEUE_PATH = Path("data/review_queue.jsonl")
 PROBE_CHARS = 120_000
+RIF_PREFIX_AGENCIES: dict[str, str] = {
+    "104": "CIA",
+    "124": "FBI",
+    "157": "SSCIA",
+    "180": "HSCA",
+    "194": "FBI",
+    "198": "JFK Task Force",
+    "202": "Secret Service",
+}
 
 
 @dataclass(frozen=True)
@@ -148,7 +157,14 @@ def extract_document_metadata(path: Path, corpus_root: Path) -> DocumentMetadata
         doc_date_raw = _find_generic_document_date(text)
 
     doc_date = _parse_document_date(doc_date_raw) if doc_date_raw else None
-    originating_agency = originator or agency or "unknown"
+    prefix_agency = _agency_from_rif(rif_number)
+    agency = prefix_agency or agency
+    originating_agency = (
+        prefix_agency
+        or _known_agency(originator)
+        or _known_agency(agency)
+        or "unknown"
+    )
     needs_review = doc_date is None
 
     return DocumentMetadata(
@@ -204,6 +220,20 @@ def _extract_record_number(text: str) -> str | None:
 def _extract_rif_from_filename(path: Path) -> str | None:
     match = _FILENAME_RIF_RE.search(path.name)
     return match.group(0) if match else None
+
+
+def _agency_from_rif(rif_number: str | None) -> str | None:
+    if not rif_number:
+        return None
+    prefix = rif_number.split("-", maxsplit=1)[0]
+    return RIF_PREFIX_AGENCIES.get(prefix)
+
+
+def _known_agency(raw: str | None) -> str | None:
+    value = _clean_value(raw)
+    if not value or value.lower() == "unknown":
+        return None
+    return value
 
 
 def _extract_section(text: str, heading_re: re.Pattern[str]) -> str | None:

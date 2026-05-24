@@ -175,15 +175,16 @@ def group_hits_by_day(
                 span_start=int(row.get("span_start") or 0),
                 span_end=int(row.get("span_end") or 0),
                 context=(
-                    stored_context
-                    or _source_context(
+                    _source_context(
                         corpus_root=corpus_root,
                         source_path=source_path,
                         span_start=int(row.get("span_start") or 0),
                         span_end=int(row.get("span_end") or 0),
                         context_chars=context_chars,
+                        matched_text=matched_text,
                         source_cache=source_cache,
                     )
+                    or stored_context
                 ),
             )
         )
@@ -412,6 +413,7 @@ def _source_context(
     span_start: int,
     span_end: int,
     context_chars: int,
+    matched_text: str,
     source_cache: dict[str, str],
 ) -> str:
     if not source_path:
@@ -423,11 +425,37 @@ def _source_context(
         source_cache[source_path] = path.read_text(encoding="utf-8", errors="replace")
 
     text = source_cache[source_path]
-    if span_start < 0 or span_end < span_start or span_start >= len(text):
+    match_span = _resolve_match_span(text, span_start, span_end, matched_text)
+    if match_span is None:
         return ""
-    start = max(0, span_start - context_chars)
-    end = min(len(text), span_end + context_chars)
+    start = max(0, match_span[0] - context_chars)
+    end = min(len(text), match_span[1] + context_chars)
     return text[start:end].strip()
+
+
+def _resolve_match_span(
+    text: str,
+    span_start: int,
+    span_end: int,
+    matched_text: str,
+) -> tuple[int, int] | None:
+    if 0 <= span_start <= span_end <= len(text):
+        if not matched_text or text[span_start:span_end] == matched_text:
+            return (span_start, span_end)
+
+    if not matched_text:
+        return None
+
+    local_start = max(0, span_start - 2_000)
+    local_end = min(len(text), span_end + 2_000)
+    local_at = text.find(matched_text, local_start, local_end)
+    if local_at >= 0:
+        return (local_at, local_at + len(matched_text))
+
+    global_at = text.find(matched_text)
+    if global_at >= 0:
+        return (global_at, global_at + len(matched_text))
+    return None
 
 
 def _stored_context(row: dict[str, Any]) -> str:
