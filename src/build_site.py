@@ -378,9 +378,21 @@ def page(title: str, body: str, css_href: str) -> str:
   <link rel="stylesheet" href="{css_href}">
 </head>
 <body>
+{release_banner()}
 {body}
 </body>
 </html>
+"""
+
+
+def release_banner() -> str:
+    return """
+<aside class="release-banner" role="note">
+  <strong>Declassification note:</strong>
+  All cited documents are part of NARA's
+  <a href="https://www.archives.gov/research/jfk/release-2025">2025 JFK Assassination Records Release</a>
+  and are presented as declassified public records. Any classification markings shown in the original files indicate their original classifications, not a current classification status.
+</aside>
 """
 
 
@@ -519,6 +531,14 @@ pre,
 
 .year-links {
   font-size: 1.1rem;
+}
+
+.release-banner {
+  background: #fff8e8;
+  border: 1px solid #f0c36d;
+  border-left: 5px solid #d97706;
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 0.9rem;
 }
 """
 
