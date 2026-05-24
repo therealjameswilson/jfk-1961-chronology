@@ -1,0 +1,81 @@
+# date_samples.txt
+# Test fixture for src/date_patterns.py
+# Format: TYPE<TAB>TEXT
+# TYPE values:
+#   DAY      = should resolve to a single YYYY-MM-DD
+#   RANGE    = should expand to multiple consecutive days
+#   MONTH    = should bucket to YYYY-MM (no specific day)
+#   QUARTER  = should bucket to a quarter/season group
+#   NONE     = should NOT match any date
+#   REVIEW   = ambiguous; flag for manual review
+
+# --- Clean DAY cases ---
+DAY	January 20, 1961
+DAY	Jan. 20, 1961
+DAY	20 January 1961
+DAY	20 Jan 61
+DAY	1/20/61
+DAY	01/20/1961
+DAY	1-20-61
+DAY	1961-01-20
+DAY	March 11, 1961
+DAY	April 17, 1961
+DAY	October 27, 1962
+DAY	November 22, 1963
+DAY	22 Nov 63
+DAY	11/22/63
+
+# --- RANGE cases ---
+RANGE	March 11-13, 1961
+RANGE	March 11–13, 1961
+RANGE	April 17-19, 1961
+RANGE	October 16-28, 1962
+RANGE	November 19-22, 1963
+RANGE	June 3-4, 1961
+
+# --- MONTH-level cases ---
+MONTH	early March 1961
+MONTH	late March 1961
+MONTH	mid-March 1961
+MONTH	in March 1961
+MONTH	March of 1961
+MONTH	the month of April 1961
+
+# --- QUARTER / season cases ---
+QUARTER	spring 1961
+QUARTER	summer of 1961
+QUARTER	fall 1962
+QUARTER	winter 1961-62
+QUARTER	Q2 1961
+QUARTER	second quarter of 1961
+QUARTER	early 1961
+QUARTER	late 1963
+
+# --- OCR-corrupted variants ---
+DAY	January 20, l961
+DAY	January 20, 196l
+DAY	January 20, 19G1
+DAY	Janaury 20, 1961
+DAY	Apri1 17, 1961
+DAY	Octcber 27, 1962
+RANGE	April 17-19, l961
+MONTH	early March l961
+
+# --- Bare month/day with year anchor elsewhere ---
+REVIEW	On March 11, the President directed...
+REVIEW	By the 17th, the brigade was ashore.
+
+# --- NONE / no-match ---
+NONE	Room 1961 of the State Department
+NONE	Document number 19610042
+NONE	page 1961 of the report
+NONE	$1,961.00 was authorized
+NONE	The 1960s saw extensive covert action
+
+# --- Ambiguous / REVIEW ---
+REVIEW	1/2/61
+REVIEW	2/1/61
+REVIEW	shortly after the inauguration
+REVIEW	in the weeks following the Bay of Pigs
+REVIEW	during the Vienna meetings
+REVIEW	that autumn
