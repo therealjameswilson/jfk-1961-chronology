@@ -51,6 +51,7 @@ def test_render_day_keeps_unknown_date_hits_visible() -> None:
     assert "## Retrospective" in output
     assert "## Document Date Unknown" in output
     assert "[jfk_files_md/104/104-00000-00000.md]" in output
+    assert "Excerpt (+/-300 characters around match):" in output
     assert "Before January 21, 1961 after." in output
 
 
