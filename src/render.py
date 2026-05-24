@@ -148,6 +148,7 @@ def group_hits_by_day(
             continue
         source_path = str(row.get("source_path", ""))
         matched_text = str(row.get("matched_text") or "")
+        stored_context = _stored_context(row)
         grouped[str(row["referenced_date"])].append(
             RenderHit(
                 source_path=source_path,
@@ -158,15 +159,16 @@ def group_hits_by_day(
                 matched_text=matched_text,
                 span_start=int(row.get("span_start") or 0),
                 span_end=int(row.get("span_end") or 0),
-                context=_source_context(
-                    corpus_root=corpus_root,
-                    source_path=source_path,
-                    span_start=int(row.get("span_start") or 0),
-                    span_end=int(row.get("span_end") or 0),
-                    context_chars=context_chars,
-                    stored_context=_stored_context(row),
-                    matched_text=matched_text,
-                    source_cache=source_cache,
+                context=(
+                    stored_context
+                    or _source_context(
+                        corpus_root=corpus_root,
+                        source_path=source_path,
+                        span_start=int(row.get("span_start") or 0),
+                        span_end=int(row.get("span_end") or 0),
+                        context_chars=context_chars,
+                        source_cache=source_cache,
+                    )
                 ),
             )
         )
@@ -380,21 +382,19 @@ def _source_context(
     span_start: int,
     span_end: int,
     context_chars: int,
-    stored_context: str,
-    matched_text: str,
     source_cache: dict[str, str],
 ) -> str:
     if not source_path:
-        return _fallback_context(stored_context, context_chars, matched_text)
+        return ""
     if source_path not in source_cache:
         path = corpus_root / source_path
         if not path.exists():
-            return _fallback_context(stored_context, context_chars, matched_text)
+            return ""
         source_cache[source_path] = path.read_text(encoding="utf-8", errors="replace")
 
     text = source_cache[source_path]
     if span_start < 0 or span_end < span_start or span_start >= len(text):
-        return _fallback_context(stored_context, context_chars, matched_text)
+        return ""
     start = max(0, span_start - context_chars)
     end = min(len(text), span_end + context_chars)
     return text[start:end].strip()
@@ -402,19 +402,6 @@ def _source_context(
 
 def _stored_context(row: dict[str, Any]) -> str:
     return str(row.get("context_window") or row.get("context") or "")
-
-
-def _fallback_context(raw: str, context_chars: int, matched_text: str = "") -> str:
-    if not raw:
-        return ""
-    if matched_text:
-        match_at = raw.find(matched_text)
-        if match_at >= 0:
-            start = max(0, match_at - context_chars)
-            end = min(len(raw), match_at + len(matched_text) + context_chars)
-            return raw[start:end].strip()
-    window = max(context_chars * 2, context_chars)
-    return raw[:window].strip()
 
 
 def _hit_sort_key(hit: RenderHit) -> tuple[int, str, str, int]:

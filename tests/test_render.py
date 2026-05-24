@@ -7,7 +7,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from render import EventInfo, RenderHit, load_key_events, render_day
+from render import (
+    EventInfo,
+    RenderHit,
+    group_hits_by_day,
+    load_key_events,
+    render_day,
+)
 
 
 def test_load_key_events_without_yaml_dependency(tmp_path: Path) -> None:
@@ -78,3 +84,30 @@ def test_render_day_groups_retrospective_hits_by_agency() -> None:
 
     assert "## Retrospective\n\n### SSCIA" in output
     assert "#### 157-00000-00000" in output
+
+
+def test_group_hits_by_day_prefers_stored_context_window() -> None:
+    rows = [
+        {
+            "bucket_type": "day",
+            "referenced_date": "1961-04-17",
+            "source_path": "missing.md",
+            "filename": "missing.md",
+            "rif_number": None,
+            "doc_date": "1975-09-01",
+            "originating_agency": "SSCIA",
+            "matched_text": "April 17, 1961",
+            "span_start": 999,
+            "span_end": 1013,
+            "context_window": "Stored context around April 17, 1961.",
+        }
+    ]
+
+    grouped = group_hits_by_day(
+        rows,
+        corpus_root=Path("/definitely/missing"),
+        context_chars=300,
+        source_cache={},
+    )
+
+    assert grouped["1961-04-17"][0].context == "Stored context around April 17, 1961."

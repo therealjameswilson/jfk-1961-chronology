@@ -35,7 +35,7 @@ except ImportError:
 DEFAULT_OUTPUT_PATH = Path("data/hits.parquet")
 DEFAULT_START_DATE = date(1961, 1, 20)
 DEFAULT_END_DATE = date(1961, 12, 31)
-DEFAULT_CONTEXT_WORDS = 300
+DEFAULT_CONTEXT_CHARS = 300
 WORD_RE = re.compile(r"\S+")
 
 
@@ -46,7 +46,7 @@ def scan_corpus(
     *,
     start_date: date = DEFAULT_START_DATE,
     end_date: date = DEFAULT_END_DATE,
-    context_words: int = DEFAULT_CONTEXT_WORDS,
+    context_chars: int = DEFAULT_CONTEXT_CHARS,
     workers: int | None = None,
 ) -> list[dict[str, Any]]:
     """Scan source files and write raw hit rows to parquet."""
@@ -63,7 +63,7 @@ def scan_corpus(
             metadata_by_path.get(path.relative_to(corpus_root).as_posix(), {}),
             start_date.isoformat(),
             end_date.isoformat(),
-            context_words,
+            context_chars,
         )
         for path in files
     ]
@@ -96,7 +96,7 @@ def write_hits_parquet(rows: Iterable[dict[str, Any]], output_path: Path) -> Non
 
 
 def _scan_file(task: tuple[Path, Path, dict[str, Any], str, str, int]) -> list[dict[str, Any]]:
-    path, corpus_root, metadata, start_raw, end_raw, context_words = task
+    path, corpus_root, metadata, start_raw, end_raw, context_chars = task
     text = path.read_text(encoding="utf-8", errors="replace")
     source_path = path.relative_to(corpus_root).as_posix()
     rows: list[dict[str, Any]] = []
@@ -105,13 +105,13 @@ def _scan_file(task: tuple[Path, Path, dict[str, Any], str, str, int]) -> list[d
         buckets = _hit_buckets(hit, date.fromisoformat(start_raw), date.fromisoformat(end_raw))
         if not buckets:
             continue
-        context = _context_window(text, hit.span, context_words)
+        context_window = _context_window(text, hit.span, context_chars)
         for bucket in buckets:
             rows.append(
                 _hit_row(
                     hit=hit,
                     bucket=bucket,
-                    context=context,
+                    context_window=context_window,
                     source_path=source_path,
                     filename=path.name,
                     metadata=metadata,
@@ -171,7 +171,7 @@ def _hit_row(
     *,
     hit: DateHit,
     bucket: dict[str, str | None],
-    context: str,
+    context_window: str,
     source_path: str,
     filename: str,
     metadata: dict[str, Any],
@@ -193,27 +193,17 @@ def _hit_row(
         "referenced_date": bucket["referenced_date"],
         "referenced_month": bucket["referenced_month"],
         "referenced_quarter": bucket["referenced_quarter"],
-        "context": context,
-        "context_word_count": len(WORD_RE.findall(context)),
+        "context_window": context_window,
+        "context": context_window,
+        "context_char_count": len(context_window),
+        "context_word_count": len(WORD_RE.findall(context_window)),
     }
 
 
-def _context_window(text: str, span: tuple[int, int], context_words: int) -> str:
-    word_spans = [match.span() for match in WORD_RE.finditer(text)]
-    if not word_spans:
-        return ""
-
-    hit_word_index = 0
-    for index, word_span in enumerate(word_spans):
-        if word_span[1] >= span[0]:
-            hit_word_index = index
-            break
-
-    start_index = max(0, hit_word_index - context_words)
-    end_index = min(len(word_spans), hit_word_index + context_words + 1)
-    start_char = word_spans[start_index][0]
-    end_char = word_spans[end_index - 1][1]
-    return text[start_char:end_char].strip()
+def _context_window(text: str, span: tuple[int, int], context_chars: int) -> str:
+    start = max(0, span[0] - context_chars)
+    end = min(len(text), span[1] + context_chars)
+    return text[start:end].strip()
 
 
 def _hit_id(source_path: str, hit: DateHit, bucket: str | None) -> str:
@@ -301,7 +291,9 @@ def _hit_schema(pyarrow: Any) -> Any:
             ("referenced_date", pyarrow.string()),
             ("referenced_month", pyarrow.string()),
             ("referenced_quarter", pyarrow.string()),
+            ("context_window", pyarrow.string()),
             ("context", pyarrow.string()),
+            ("context_char_count", pyarrow.int64()),
             ("context_word_count", pyarrow.int64()),
         ]
     )
@@ -325,7 +317,14 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--corpus", type=Path, default=DEFAULT_CORPUS_ROOT)
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA_PATH)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH)
-    parser.add_argument("--context-words", type=int, default=DEFAULT_CONTEXT_WORDS)
+    parser.add_argument("--context-chars", type=int, default=DEFAULT_CONTEXT_CHARS)
+    parser.add_argument(
+        "--context-words",
+        type=int,
+        dest="context_chars",
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--start-date", type=date.fromisoformat, default=DEFAULT_START_DATE)
     parser.add_argument("--end-date", type=date.fromisoformat, default=DEFAULT_END_DATE)
     parser.add_argument("--workers", type=int, default=None)
@@ -340,7 +339,7 @@ def main() -> None:
         output_path=args.output,
         start_date=args.start_date,
         end_date=args.end_date,
-        context_words=args.context_words,
+        context_chars=args.context_chars,
         workers=args.workers,
     )
     print(f"wrote {len(rows)} hit rows to {args.output}")
