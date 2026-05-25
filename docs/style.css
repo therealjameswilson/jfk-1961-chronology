@@ -141,3 +141,12 @@ pre,
   margin: 0 0 1.5rem;
   padding: 0.75rem 0.9rem;
 }
+
+.page-intro {
+  color: #3c4043;
+  margin: 0 0 1.25rem;
+}
+
+.page-intro p {
+  margin: 0;
+}

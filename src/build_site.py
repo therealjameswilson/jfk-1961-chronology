@@ -183,7 +183,11 @@ def render_landing(
   {''.join(links)}
 </ul>
 """
-    return page("JFK Presidency Day-by-Day", body, "style.css")
+    intro = (
+        "This landing page introduces the public chronology, summarizes the "
+        "three yearly datasets, and links to the browsable calendars."
+    )
+    return page("JFK Presidency Day-by-Day", body, "style.css", intro)
 
 
 def render_year_index(
@@ -222,7 +226,11 @@ def render_year_index(
   <tbody>{''.join(top_rows)}</tbody>
 </table>
 """
-    return page(f"{config.year} Calendar", body, "../style.css")
+    intro = (
+        f"This calendar shows every day in the {config.year} scope and uses "
+        "color density to show how often each date is referenced in the release."
+    )
+    return page(f"{config.year} Calendar", body, "../style.css", intro)
 
 
 def render_calendar_month(
@@ -269,7 +277,11 @@ def render_month_page(config: YearConfig, month: date, markdown_path: Path) -> s
 {breadcrumb([("Home", "../../index.html"), (str(config.year), "../index.html"), (MONTH_NAMES[month.month], None)])}
 {markdown_to_html(markdown_path.read_text(encoding="utf-8"))}
 """
-    return page(f"{MONTH_NAMES[month.month]} {config.year}", body, "../../style.css")
+    intro = (
+        f"This monthly rollup summarizes references to {MONTH_NAMES[month.month]} "
+        f"{config.year}, including hit-count tables and the most-referenced days."
+    )
+    return page(f"{MONTH_NAMES[month.month]} {config.year}", body, "../../style.css", intro)
 
 
 def render_day_page(config: YearConfig, current: date, markdown_path: Path) -> str:
@@ -288,7 +300,12 @@ def render_day_page(config: YearConfig, current: date, markdown_path: Path) -> s
 </main>
 {day_nav}
 """
-    return page(_human_date(current), body, "../style.css")
+    intro = (
+        f"This daily page gathers records that mention {_human_date(current)}, "
+        "separating same-year documents, later retrospective records, and records "
+        "with unidentified document dates."
+    )
+    return page(_human_date(current), body, "../style.css", intro)
 
 
 def render_day_nav(config: YearConfig, current: date) -> str:
@@ -368,7 +385,7 @@ def breadcrumb(items: list[tuple[str, str | None]]) -> str:
     return f"<nav class=\"breadcrumb\" aria-label=\"Breadcrumb\">{' &gt; '.join(parts)}</nav>"
 
 
-def page(title: str, body: str, css_href: str) -> str:
+def page(title: str, body: str, css_href: str, intro: str) -> str:
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -379,9 +396,18 @@ def page(title: str, body: str, css_href: str) -> str:
 </head>
 <body>
 {release_banner()}
+{page_intro(intro)}
 {body}
 </body>
 </html>
+"""
+
+
+def page_intro(text: str) -> str:
+    return f"""
+<section class="page-intro" aria-label="Page introduction">
+  <p>{html.escape(text)}</p>
+</section>
 """
 
 
@@ -539,6 +565,15 @@ pre,
   border-left: 5px solid #d97706;
   margin: 0 0 1.5rem;
   padding: 0.75rem 0.9rem;
+}
+
+.page-intro {
+  color: #3c4043;
+  margin: 0 0 1.25rem;
+}
+
+.page-intro p {
+  margin: 0;
 }
 """
 
