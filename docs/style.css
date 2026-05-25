@@ -134,6 +134,64 @@ pre,
   font-size: 1.1rem;
 }
 
+.site-search {
+  border-bottom: 1px solid #dadce0;
+  margin: 0 0 1.25rem;
+  padding: 0 0 1rem;
+}
+
+.site-search label {
+  color: #3c4043;
+  display: block;
+  font-size: 0.9rem;
+  margin: 0 0 0.35rem;
+}
+
+.site-search-row {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr auto;
+}
+
+.site-search input {
+  border: 1px solid #bdc1c6;
+  font: inherit;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+}
+
+.site-search button {
+  background: #174ea6;
+  border: 1px solid #174ea6;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.5rem 0.8rem;
+}
+
+.search-count,
+.search-empty,
+.search-meta {
+  color: #5f6368;
+}
+
+.search-list {
+  padding-left: 1.4rem;
+}
+
+.search-result {
+  margin: 0 0 1.25rem;
+}
+
+.search-result h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.2rem;
+}
+
+.search-result p {
+  margin: 0.2rem 0;
+}
+
 .release-banner {
   background: #fff8e8;
   border: 1px solid #f0c36d;

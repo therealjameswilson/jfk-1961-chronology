@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Search</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="release-banner" role="note">
+  <strong>Declassification note:</strong>
+  All cited documents are part of NARA's
+  <a href="https://www.archives.gov/research/jfk/release-2025">2025 JFK Assassination Records Release</a>
+  and are presented as declassified public records. Any classification markings shown in the original files indicate their original classifications, not a current classification status.
+</aside>
+
+
+<form class="site-search" id="site-search-form" action="search.html" method="get" role="search">
+  <label for="site-search-input">Search this chronology</label>
+  <div class="site-search-row">
+    <input id="site-search-input" name="q" type="search" placeholder="Date, document ID, agency, excerpt..." autocomplete="off">
+    <button type="submit">Search</button>
+  </div>
+</form>
+
+
+<section class="page-intro" aria-label="Page introduction">
+  <p>This search page looks across the generated daily pages, monthly rollups, calendars, and source excerpts in this public chronology.</p>
+</section>
+
+
+<h1>Search</h1>
+<p>Search dates, document IDs, agencies, key event labels, monthly rollups, and excerpt text. Results link to the generated chronology pages.</p>
+<div id="search-results" class="search-results">Enter a search term above.</div>
+<script src="search.js" defer></script>
+
+</body>
+</html>

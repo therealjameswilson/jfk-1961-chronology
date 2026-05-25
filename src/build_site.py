@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import calendar
 import html
+import json
 import re
 import shutil
 from collections import Counter
@@ -84,9 +85,12 @@ def main() -> None:
         shutil.rmtree(DOCS_ROOT)
     DOCS_ROOT.mkdir(parents=True)
     write_text(DOCS_ROOT / "style.css", site_css())
+    write_text(DOCS_ROOT / "search.js", search_js())
+    write_text(DOCS_ROOT / "search-index.json", build_search_index(year_data))
+    write_text(DOCS_ROOT / "search.html", render_search_page())
     write_text(DOCS_ROOT / "index.html", render_landing(year_data))
 
-    html_count = 1
+    html_count = 2
     for config, events, stats in year_data:
         html_count += build_year(config, events, stats)
 
@@ -188,6 +192,20 @@ def render_landing(
         "three yearly datasets, and links to the browsable calendars."
     )
     return page("JFK Presidency Day-by-Day", body, "style.css", intro)
+
+
+def render_search_page() -> str:
+    body = """
+<h1>Search</h1>
+<p>Search dates, document IDs, agencies, key event labels, monthly rollups, and excerpt text. Results link to the generated chronology pages.</p>
+<div id="search-results" class="search-results">Enter a search term above.</div>
+<script src="search.js" defer></script>
+"""
+    intro = (
+        "This search page looks across the generated daily pages, monthly "
+        "rollups, calendars, and source excerpts in this public chronology."
+    )
+    return page("Search", body, "style.css", intro)
 
 
 def render_year_index(
@@ -386,6 +404,7 @@ def breadcrumb(items: list[tuple[str, str | None]]) -> str:
 
 
 def page(title: str, body: str, css_href: str, intro: str) -> str:
+    root_prefix = css_href.removesuffix("style.css")
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -396,10 +415,23 @@ def page(title: str, body: str, css_href: str, intro: str) -> str:
 </head>
 <body>
 {release_banner()}
+{site_search(root_prefix)}
 {page_intro(intro)}
 {body}
 </body>
 </html>
+"""
+
+
+def site_search(root_prefix: str) -> str:
+    return f"""
+<form class="site-search" id="site-search-form" action="{root_prefix}search.html" method="get" role="search">
+  <label for="site-search-input">Search this chronology</label>
+  <div class="site-search-row">
+    <input id="site-search-input" name="q" type="search" placeholder="Date, document ID, agency, excerpt..." autocomplete="off">
+    <button type="submit">Search</button>
+  </div>
+</form>
 """
 
 
@@ -419,6 +451,202 @@ def release_banner() -> str:
   <a href="https://www.archives.gov/research/jfk/release-2025">2025 JFK Assassination Records Release</a>
   and are presented as declassified public records. Any classification markings shown in the original files indicate their original classifications, not a current classification status.
 </aside>
+"""
+
+
+def build_search_index(
+    year_data: list[tuple[YearConfig, dict[str, dict[str, EventInfo]], YearStats]]
+) -> str:
+    entries: list[dict[str, str | int]] = [
+        {
+            "title": "JFK Presidency Day-by-Day",
+            "url": "index.html",
+            "type": "Overview",
+            "date": "",
+            "year": "",
+            "content": (
+                "Project landing page with methodology, summary statistics, "
+                "and links to yearly calendars."
+            ),
+        },
+        {
+            "title": "Search",
+            "url": "search.html",
+            "type": "Search",
+            "date": "",
+            "year": "",
+            "content": "Search the generated chronology pages.",
+        },
+    ]
+    for config, events, stats in year_data:
+        top_days = " ".join(day for day, _ in stats.top_days)
+        entries.append(
+            {
+                "title": f"{config.year} calendar",
+                "url": f"{config.year}/index.html",
+                "type": "Calendar",
+                "date": "",
+                "year": config.year,
+                "content": (
+                    f"{config.year} calendar with {stats.distinct_hit_days} "
+                    f"days containing references. Top days: {top_days}."
+                ),
+            }
+        )
+        for month in iter_months(config.start_date, config.end_date):
+            month_key = f"{month.year:04d}-{month.month:02d}"
+            markdown_path = config.repo_root / "output/by-month" / f"{month_key}.md"
+            event = events["months"].get(month_key)
+            title = f"{MONTH_NAMES[month.month]} {config.year}"
+            if event and event.label:
+                title = f"{title}: {event.label}"
+            entries.append(
+                {
+                    "title": title,
+                    "url": f"{config.year}/{month.month:02d}/index.html",
+                    "type": "Month",
+                    "date": month_key,
+                    "year": config.year,
+                    "content": search_text(markdown_path),
+                }
+            )
+        for current in iter_days(config.start_date, config.end_date):
+            day_key = current.isoformat()
+            markdown_path = config.repo_root / "output/by-day" / f"{day_key}.md"
+            event = events["days"].get(day_key)
+            title = _human_date(current)
+            if event and event.label:
+                title = f"{title}: {event.label}"
+            entries.append(
+                {
+                    "title": title,
+                    "url": f"{config.year}/{current.month:02d}-{current.day:02d}.html",
+                    "type": "Day",
+                    "date": day_key,
+                    "year": config.year,
+                    "content": search_text(markdown_path),
+                }
+            )
+    return json.dumps(entries, ensure_ascii=True, indent=2)
+
+
+def search_text(path: Path) -> str:
+    if not path.exists():
+        return ""
+    raw = scrub_security_numbers(path.read_text(encoding="utf-8"))
+    raw = re.sub(r"<https?://[^>]+>", " ", raw)
+    raw = re.sub(r"https?://\S+", " ", raw)
+    raw = re.sub(r"[#>*_`|\\[\\]()]", " ", raw)
+    return re.sub(r"\s+", " ", raw).strip()
+
+
+def search_js() -> str:
+    return r"""const form = document.getElementById("site-search-form");
+const input = document.getElementById("site-search-input");
+const results = document.getElementById("search-results");
+
+const params = new URLSearchParams(window.location.search);
+const initialQuery = params.get("q") || "";
+if (input) {
+  input.value = initialQuery;
+}
+
+if (form && input) {
+  form.addEventListener("submit", (event) => {
+    const query = input.value.trim();
+    if (!query) {
+      event.preventDefault();
+      input.focus();
+    }
+  });
+}
+
+if (results) {
+  if (initialQuery.trim()) {
+    runSearch(initialQuery.trim());
+  } else {
+    results.innerHTML = '<p class="search-empty">Enter a search term above.</p>';
+  }
+}
+
+async function runSearch(query) {
+  results.innerHTML = '<p class="search-empty">Searching...</p>';
+  const response = await fetch("search-index.json");
+  const index = await response.json();
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = index
+    .map((entry) => ({ entry, score: scoreEntry(entry, terms), snippet: snippet(entry.content || "", terms) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title))
+    .slice(0, 50);
+
+  if (!matches.length) {
+    results.innerHTML = `<p class="search-empty">No results for <strong>${escapeHtml(query)}</strong>.</p>`;
+    return;
+  }
+
+  results.innerHTML = `
+    <p class="search-count">${matches.length} result${matches.length === 1 ? "" : "s"} for <strong>${escapeHtml(query)}</strong>.</p>
+    <ol class="search-list">
+      ${matches.map(renderResult).join("")}
+    </ol>
+  `;
+}
+
+function scoreEntry(entry, terms) {
+  const title = (entry.title || "").toLowerCase();
+  const date = (entry.date || "").toLowerCase();
+  const type = (entry.type || "").toLowerCase();
+  const content = (entry.content || "").toLowerCase();
+  const haystack = `${title} ${date} ${type} ${content}`;
+  if (!terms.every((term) => haystack.includes(term))) {
+    return 0;
+  }
+  return terms.reduce((score, term) => {
+    if (title.includes(term)) score += 12;
+    if (date.includes(term)) score += 10;
+    if (type.includes(term)) score += 4;
+    const contentHits = content.split(term).length - 1;
+    return score + Math.min(contentHits, 8);
+  }, 0);
+}
+
+function snippet(content, terms) {
+  if (!content) return "";
+  const lower = content.toLowerCase();
+  const positions = terms.map((term) => lower.indexOf(term)).filter((pos) => pos >= 0);
+  const first = positions.length ? Math.min(...positions) : 0;
+  const start = Math.max(0, first - 120);
+  const end = Math.min(content.length, first + 220);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < content.length ? "..." : "";
+  return `${prefix}${content.slice(start, end)}${suffix}`;
+}
+
+function renderResult({ entry, snippet }) {
+  const meta = [entry.type, entry.date].filter(Boolean).join(" - ");
+  return `
+    <li class="search-result">
+      <h2><a href="${escapeAttribute(entry.url)}">${escapeHtml(entry.title)}</a></h2>
+      ${meta ? `<p class="search-meta">${escapeHtml(meta)}</p>` : ""}
+      ${snippet ? `<p>${escapeHtml(snippet)}</p>` : ""}
+    </li>
+  `;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/`/g, "&#96;");
+}
 """
 
 
@@ -557,6 +785,64 @@ pre,
 
 .year-links {
   font-size: 1.1rem;
+}
+
+.site-search {
+  border-bottom: 1px solid #dadce0;
+  margin: 0 0 1.25rem;
+  padding: 0 0 1rem;
+}
+
+.site-search label {
+  color: #3c4043;
+  display: block;
+  font-size: 0.9rem;
+  margin: 0 0 0.35rem;
+}
+
+.site-search-row {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr auto;
+}
+
+.site-search input {
+  border: 1px solid #bdc1c6;
+  font: inherit;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+}
+
+.site-search button {
+  background: #174ea6;
+  border: 1px solid #174ea6;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.5rem 0.8rem;
+}
+
+.search-count,
+.search-empty,
+.search-meta {
+  color: #5f6368;
+}
+
+.search-list {
+  padding-left: 1.4rem;
+}
+
+.search-result {
+  margin: 0 0 1.25rem;
+}
+
+.search-result h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.2rem;
+}
+
+.search-result p {
+  margin: 0.2rem 0;
 }
 
 .release-banner {
